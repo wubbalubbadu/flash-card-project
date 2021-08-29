@@ -12,7 +12,7 @@ BACK_FILL = "white"
 FRONT_LANG = "English"
 BACK_LANG = "Chinese"
 START_INDEX = 0
-END_INDEX = 500
+END_INDEX = 4500
 
 REVIEW_FILE_PATH = "data/words_to_review.csv"
 LEARNING_FILE_PATH = "data/words_to_learn.csv"
@@ -21,6 +21,7 @@ LIBRARY_FILE_PATH = "data/en5000.csv"
 
 def get_data():
     global data_list, data
+    # reviewing mode:
     if radiostate.get() == 1:
         try:
             if os.path.getsize(REVIEW_FILE_PATH) < 2:
@@ -33,6 +34,7 @@ def get_data():
             radiostate.set(0)
             messagebox.showinfo(message="No word in word bank")
             data = get_library()
+    # learning mode:
     else:
         try:
             if os.path.getsize(LEARNING_FILE_PATH) < 2:
@@ -60,14 +62,15 @@ def generate():
 
 
 def unknown_word():
+    review_list = []
     try:
-        if os.path.getsize(REVIEW_FILE_PATH) == 0:
-            review_list = []
+        if os.path.getsize(REVIEW_FILE_PATH) < 2:
+            pass
         else:
             review_df = pandas.read_csv(REVIEW_FILE_PATH)
             review_list = review_df.to_dict(orient="records")
     except FileNotFoundError:
-        review_list = []
+        pass
     finally:
         review_list.append(curr_word)
         new_review_list = pandas.DataFrame(review_list)
@@ -81,9 +84,7 @@ def known_word():
     if curr_word in data_list:
         data_list.remove(curr_word)
     new_data_list = pandas.DataFrame(data_list)
-    print(new_data_list)
     new_data_list.to_csv(LEARNING_FILE_PATH, index=False)
-    # if in review mode, delete the learned word
     if radiostate.get() == 1:
         new_data_list.to_csv(REVIEW_FILE_PATH, index=False)
     if len(data_list) == 0:
@@ -106,8 +107,10 @@ flip_timer = root.after(3000, flip)
 # radiostate
 frame = Frame()
 radiostate = IntVar()
-review_button = Radiobutton(frame, text="review mode", value=1, variable=radiostate, command=get_data)
-learn_button = Radiobutton(frame, text="learning word", value=0, variable=radiostate, command=get_data)
+review_button = Radiobutton(frame, text="Review Mode", value=1, variable=radiostate,
+                            command=get_data, bg=BACKGROUND_COLOR, width=13)
+learn_button = Radiobutton(frame, text="Learning Mode", value=0, variable=radiostate,
+                           command=get_data, bg=BACKGROUND_COLOR, width=13)
 review_button.pack()
 learn_button.pack()
 frame.grid(row=1, column=2)
